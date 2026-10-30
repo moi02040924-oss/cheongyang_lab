@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리 동네 미세먼지</title>
+<style>
+  :root{--forest:#1F4A35;--forest2:#2E7D5B;--navy:#1F3A5F;--gold:#8A5E12;
+    --bg:#EDF2F1;--card:#fff;--line:#D5E2E0;--sub:#55605A;--ink:#1B2620;--blue:#2C6E9E;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:600px;margin:0 auto;padding:18px 16px 50px}
+  header{text-align:center;padding:16px 8px 6px}
+  .brand{color:var(--forest2);font-weight:800;font-size:13px;letter-spacing:1px}
+  h1{font-size:25px;margin:6px 0 4px;color:var(--navy);font-weight:800}
+  .lead{color:var(--sub);font-size:15px;margin:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-top:14px;box-shadow:0 2px 10px rgba(31,74,53,.06)}
+  .lab{font-weight:800;color:var(--navy);margin:0 0 10px;font-size:16px}
+  .cities{display:flex;flex-wrap:wrap;gap:9px}
+  .city{border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 16px;
+    font-size:17px;font-weight:700;cursor:pointer;color:var(--ink);font-family:inherit}
+  .city:active{transform:scale(.97)}
+  .city.on{border-color:var(--forest2);background:#E7F1EB;color:var(--forest)}
+  .grade{text-align:center;border-radius:16px;padding:20px 10px;color:#fff;margin-bottom:12px}
+  .gemoji{font-size:64px;line-height:1.1}
+  .gtext{font-size:34px;font-weight:800;margin-top:2px}
+  .gsub{font-size:15px;opacity:.95;margin-top:2px}
+  .pms{display:flex;gap:12px}
+  .pm{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .pm .k{font-size:13px;color:var(--sub);font-weight:700}
+  .pm .v{font-size:26px;font-weight:800;color:var(--navy)}
+  .pm .u{font-size:12px;color:var(--sub)}
+  .pm .g{font-size:13px;font-weight:800;margin-top:3px}
+  .loading{text-align:center;color:var(--sub);font-size:16px;padding:20px}
+  .apibox{background:#F4F8FA;border:1px dashed #A9C7D6;border-radius:12px;padding:12px 14px;margin-top:14px}
+  .apibox .t{font-size:13px;font-weight:800;color:var(--blue);margin-bottom:5px}
+  .apiurl{font-family:Consolas,monospace;font-size:11px;color:#333;word-break:break-all;
+    background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px;display:block}
+  .note{font-size:12.5px;color:var(--sub);margin-top:8px}
+  .step{background:#FBF4E4;border:1px solid #EAD9A8;border-radius:12px;padding:12px 14px;margin-top:14px;
+    font-size:14px;color:var(--gold);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">커리어숲 · 바이브코딩 실습</div>
+    <h1>😷 우리 동네 미세먼지</h1>
+    <p class="lead">버튼을 누르면, 내 앱이 API로 <b>지금 미세먼지</b>를 받아와요!</p>
+  </header>
+
+  <div class="card">
+    <p class="lab">① 우리 동네를 골라보세요</p>
+    <div class="cities" id="cities"></div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none">
+    <p class="lab" id="cityName">② 지금 공기질</p>
+    <div id="result"></div>
+    <div class="apibox">
+      <div class="t">🔍 방금 이 API 창구에 물어봤어요 (실제 주소)</div>
+      <code class="apiurl" id="apiurl">—</code>
+      <div class="note">이 주소로 <b>공기질 서비스(주방)</b>에 물어보니 → 위 수치(요리)를 받아온 거예요.
+        나는 미세먼지를 재는 법을 몰라도, <b>API(종업원)</b>에게 부탁만 하면 돼요.</div>
+    </div>
+  </div>
+
+  <div class="step">💡 실습 포인트: 동네를 바꿔 눌러보세요. 그때마다 앱이 <b>API에 새로 물어봐서</b> 실시간 미세먼지가 바뀝니다.
+    이게 “API로 데이터 받아오기”예요! (무료·키 불필요한 Open-Meteo 공기질 API 사용)</div>
+</div>
+
+<script>
+const CITIES=[
+ {n:"청양",la:36.46,lo:126.80},{n:"홍성",la:36.60,lo:126.66},
+ {n:"평택",la:36.99,lo:127.09},{n:"오산",la:37.15,lo:127.07},
+ {n:"서울",la:37.57,lo:126.98},{n:"부산",la:35.18,lo:129.08},{n:"제주",la:33.50,lo:126.53}
+];
+// 한국 기준 PM2.5 등급
+function gradePM25(v){
+  if(v<=15)return{t:"좋음",e:"😊",c:"#2C6E9E",s:"창문 활짝 열고 산책하기 좋아요"};
+  if(v<=35)return{t:"보통",e:"🙂",c:"#2E7D5B",s:"평소처럼 활동해도 괜찮아요"};
+  if(v<=75)return{t:"나쁨",e:"😷",c:"#C08A1E",s:"외출 시 마스크를 쓰세요"};
+  return{t:"매우 나쁨",e:"⚠️",c:"#B3261E",s:"바깥 활동을 줄이고 실내에 계세요"};
+}
+function gradePM10(v){
+  if(v<=30)return"좋음"; if(v<=80)return"보통"; if(v<=150)return"나쁨"; return"매우나쁨";
+}
+const wrapC=document.getElementById('cities');
+CITIES.forEach((c)=>{
+  const b=document.createElement('button');
+  b.className='city'; b.textContent=c.n;
+  b.onclick=()=>{ document.querySelectorAll('.city').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); loadAir(c); };
+  wrapC.appendChild(b);
+});
+async function loadAir(c){
+  const card=document.getElementById('resultCard');
+  const res=document.getElementById('result');
+  card.style.display='block';
+  document.getElementById('cityName').textContent='② '+c.n+' 지금 공기질';
+  res.innerHTML='<div class="loading">API에 물어보는 중… ⏳</div>';
+  const url=`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${c.la}&longitude=${c.lo}&current=pm2_5,pm10`;
+  document.getElementById('apiurl').textContent=url;
+  try{
+    const r=await fetch(url); const j=await r.json(); const cur=j.current;
+    const p25=Math.round(cur.pm2_5), p10=Math.round(cur.pm10);
+    const g=gradePM25(p25);
+    res.innerHTML=`
+      <div class="grade" style="background:${g.c}">
+        <div class="gemoji">${g.e}</div>
+        <div class="gtext">${g.t}</div>
+        <div class="gsub">${g.s}</div>
+      </div>
+      <div class="pms">
+        <div class="pm"><div class="k">초미세먼지 PM2.5</div><div class="v">${p25}</div>
+          <div class="u">㎍/㎥</div><div class="g" style="color:${g.c}">${g.t}</div></div>
+        <div class="pm"><div class="k">미세먼지 PM10</div><div class="v">${p10}</div>
+          <div class="u">㎍/㎥</div><div class="g">${gradePM10(p10)}</div></div>
+      </div>`;
+  }catch(e){
+    res.innerHTML='<div class="loading">앗, 인터넷 연결을 확인해 주세요 😅<br>(API에 못 물어봤어요)</div>';
+  }
+}
+// (수업용 사본) 시작할 때 자동으로 물어보지 않습니다. 동네 버튼을 눌러야 공기질 서비스에 물어봅니다.
+</script>
+</body>
+</html>

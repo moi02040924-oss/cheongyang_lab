@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>뽀모도로 타이머</title>
+<style>
+  :root{
+    --tomato:#E1553C;--tomato-d:#C4442D;--forest:#2E7D5B;--forest-d:#1F4A35;--navy:#1B2A4A;
+    --blue:#2C6E9E;--bg:#FDF5F2;--card:#fff;--line:#F0DDD5;--sub:#7a6a66;--ink:#2A1F1C;
+    --accent:var(--tomato);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;line-height:1.5;-webkit-text-size-adjust:100%;
+    transition:background .4s}
+  body.focus{--accent:var(--tomato)} body.rest{--accent:var(--forest);background:#F0F7F3}
+  .wrap{max-width:460px;margin:0 auto;padding:18px 16px 44px;text-align:center}
+  header{padding:8px 4px 4px}
+  .brand{color:var(--accent);font-weight:800;font-size:13px;letter-spacing:1px}
+  h1{font-size:26px;margin:5px 0 2px;color:var(--navy);font-weight:800}
+  .lead{color:var(--sub);font-size:13.5px;margin:0}
+  /* 모드 탭 */
+  .modes{display:flex;gap:7px;justify-content:center;margin:16px 0 6px}
+  .mode{border:2px solid var(--line);background:#fff;border-radius:22px;padding:9px 15px;
+    font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;color:var(--sub)}
+  .mode.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  /* 할 일 */
+  .task{margin:12px 0 4px}
+  .task input{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-size:15px;
+    font-family:inherit;text-align:center;color:var(--navy);font-weight:600}
+  .task input:focus{outline:none;border-color:var(--accent)}
+  /* 원형 타이머 */
+  .ring{position:relative;width:250px;height:250px;margin:14px auto 6px}
+  svg{transform:rotate(-90deg)}
+  .bg-c{fill:none;stroke:#F0E4DE;stroke-width:14}
+  body.rest .bg-c{stroke:#DCEBE3}
+  .fg-c{fill:none;stroke:var(--accent);stroke-width:14;stroke-linecap:round;
+    stroke-dasharray:691;stroke-dashoffset:0;transition:stroke-dashoffset .4s linear}
+  .time{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .time .t{font-size:56px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;letter-spacing:1px}
+  .time .lab{font-size:14px;font-weight:800;color:var(--accent);margin-top:2px}
+  /* 버튼 */
+  .ctrl{display:flex;gap:10px;justify-content:center;margin-top:10px}
+  .btn{border:none;border-radius:14px;padding:15px 30px;font-size:18px;font-weight:800;cursor:pointer;font-family:inherit}
+  .btn.go{background:var(--accent);color:#fff;box-shadow:0 6px 16px rgba(0,0,0,.15);min-width:130px}
+  .btn.sec{background:#fff;color:var(--sub);border:1.5px solid var(--line);font-size:15px;padding:15px 18px}
+  .btn:active{transform:scale(.97)}
+  .btn:disabled{opacity:.4;cursor:default;box-shadow:none}
+  /* 토마토 카운터 */
+  .count{margin-top:16px;font-size:15px;color:var(--navy);font-weight:700}
+  .count .toms{font-size:22px;letter-spacing:1px}
+  /* 설정 */
+  .setbtn{margin-top:14px;background:none;border:none;color:var(--sub);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:underline}
+  .settings{display:none;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:10px;text-align:left}
+  .settings.show{display:block}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;font-size:14px}
+  .row input[type=number]{width:64px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-family:inherit;text-align:center;font-size:14px}
+  .row label{font-weight:600}
+  .msg{margin-top:14px;font-size:13.5px;color:var(--sub);line-height:1.7;background:#FFF3EE;border:1px solid #F3D9CE;border-radius:12px;padding:11px 14px}
+  body.rest .msg{background:#EAF6EF;border-color:#CDE7D8}
+  .msg b{color:var(--accent)}
+  .note{font-size:12px;color:var(--sub);margin-top:16px;line-height:1.7}
+</style>
+</head>
+<body class="focus">
+<div class="wrap">
+  <header>
+    <div class="brand">🍅 집중 · 미루기 극복 도구</div>
+    <h1>뽀모도로 타이머</h1>
+    <p class="lead">25분 집중 → 5분 휴식 → 반복 · 일단 <b>시작</b>부터!</p>
+  </header>
+
+  <div class="modes">
+    <button class="mode on" id="mFocus" onclick="setMode('focus')">집중 25분</button>
+    <button class="mode" id="mShort" onclick="setMode('short')">짧은 휴식 5분</button>
+    <button class="mode" id="mLong" onclick="setMode('long')">긴 휴식 15분</button>
+  </div>
+
+  <div class="task">
+    <input id="task" type="text" placeholder="🎯 지금 집중할 일 한 가지 (예: 이력서 1장 쓰기)" maxlength="40">
+  </div>
+
+  <div class="ring">
+    <svg width="250" height="250" viewBox="0 0 250 250">
+      <circle class="bg-c" cx="125" cy="125" r="110"></circle>
+      <circle class="fg-c" id="prog" cx="125" cy="125" r="110"></circle>
+    </svg>
+    <div class="time">
+      <div class="t" id="disp">25:00</div>
+      <div class="lab" id="lab">집중 시간</div>
+    </div>
+  </div>
+
+  <div class="ctrl">
+    <button class="btn go" id="startBtn" onclick="start()">▶ 시작</button>
+    <button class="btn sec" id="pauseBtn" onclick="pause()">⏸ 멈춤</button>
+    <button class="btn sec" onclick="reset()">↺ 리셋</button>
+  </div>
+
+  <div class="count">오늘 완료한 뽀모도로 <span class="toms" id="toms">🍅 0</span></div>
+
+  <button class="setbtn" onclick="toggleSet()">⚙️ 시간·소리 설정</button>
+  <div class="settings" id="settings">
+    <div class="row"><label>집중 (분)</label><input type="number" id="setFocus" min="1" max="90" value="25"></div>
+    <div class="row"><label>짧은 휴식 (분)</label><input type="number" id="setShort" min="1" max="30" value="5"></div>
+    <div class="row"><label>긴 휴식 (분)</label><input type="number" id="setLong" min="1" max="60" value="15"></div>
+    <div class="row"><label>끝나면 자동 시작</label><input type="checkbox" id="setAuto" checked></div>
+    <div class="row"><label>소리 알림</label><input type="checkbox" id="setSound" checked></div>
+    <button class="btn go" style="width:100%;margin-top:8px;padding:11px;font-size:15px" onclick="applySet()">✅ 적용</button>
+  </div>
+
+  <div class="msg" id="msg">💪 <b>미루기 극복 팁:</b> 완벽하게 하려 말고, <b>일단 25분만</b> 시작하세요. '5초 규칙'으로 지금 ▶시작 버튼 누르기!</div>
+
+  <div class="note">🍅 정통 뽀모도로는 '일시정지 없음'이 원칙 — 급한 일로 끊기면 <b>리셋(새 25분)</b>이 정석이에요. (멈춤은 실용용) · 4개 완료마다 긴 휴식 추천 · 소리는 이 기기에서만.<br>커리어숲 · 커리어셀파 임금희 · 2026</div>
+</div>
+
+<script>
+const MIN={focus:25,short:5,long:15};
+let mode='focus', remain=MIN.focus*60, total=MIN.focus*60, running=false, iv=null, doneCount=0, cycle=0;
+const CIRC=2*Math.PI*110; // 691
+const $=id=>document.getElementById(id);
+$('prog').style.strokeDasharray=CIRC;
+
+// localStorage
+try{ const s=JSON.parse(localStorage.getItem('pomo')||'{}');
+  if(s.min){MIN.focus=s.min.focus;MIN.short=s.min.short;MIN.long=s.min.long;}
+  if(s.task) $('task').value=s.task;
+  if(typeof s.done==='number') doneCount=s.done;
+  if(s.auto!==undefined) $('setAuto').checked=s.auto;
+  if(s.sound!==undefined) $('setSound').checked=s.sound;
+}catch(e){}
+$('setFocus').value=MIN.focus; $('setShort').value=MIN.short; $('setLong').value=MIN.long;
+function save(){ try{ localStorage.setItem('pomo',JSON.stringify({
+  min:MIN, task:$('task').value, done:doneCount, auto:$('setAuto').checked, sound:$('setSound').checked
+}));}catch(e){} }
+
+const LABELS={focus:'집중 시간',short:'짧은 휴식',long:'긴 휴식'};
+const MSG={
+ focus:'💪 <b>미루기 극복 팁:</b> 완벽하게 하려 말고, <b>일단 25분만</b> 시작하세요. 지금 ▶시작 누르기!',
+ short:'🌿 <b>5분 휴식:</b> 일어나 스트레칭·물 한 잔. 폰 스크롤은 뇌가 안 쉬어요!',
+ long:'🌳 <b>긴 휴식:</b> 잘하셨어요! 산책·창밖 보기로 뇌를 충전하세요.'
+};
+function fmt(s){ const m=Math.floor(s/60), ss=s%60; return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0'); }
+function render(){
+  $('disp').textContent=fmt(remain);
+  $('lab').textContent=LABELS[mode];
+  const ratio= total>0 ? remain/total : 0;
+  $('prog').style.strokeDashoffset = CIRC*(1-ratio);
+  $('toms').textContent='🍅 '+doneCount;
+  document.body.className = (mode==='focus')?'focus':'rest';
+  ['mFocus','mShort','mLong'].forEach(id=>$(id).classList.remove('on'));
+  $({focus:'mFocus',short:'mShort',long:'mLong'}[mode]).classList.add('on');
+  $('msg').innerHTML=MSG[mode];
+  $('startBtn').textContent = running ? '⏳ 진행 중' : (remain<total?'▶ 계속':'▶ 시작');
+  $('startBtn').disabled = running;
+  $('pauseBtn').disabled = !running;
+}
+function setMode(m){ stop(); mode=m; total=MIN[m]*60; remain=total; render(); }
+function toggle(){ running?stop():start(); }
+function pause(){ stop(); }
+function start(){
+  if(running) return;
+  running=true; render();
+  iv=setInterval(()=>{
+    remain--;
+    if(remain<=3 && remain>0) beep(mode==='focus'?880:520,120);
+    if(remain<=0){ finish(); return; }
+    render();
+  },1000);
+}
+function stop(){ running=false; if(iv){clearInterval(iv);iv=null;} render(); }
+function reset(){ stop(); remain=total; render(); }
+function finish(){
+  stop(); beep(mode==='focus'?330:660,600);
+  if(mode==='focus'){ doneCount++; cycle++; save();
+    // 4번마다 긴 휴식
+    var next = (cycle%4===0)?'long':'short';
+    mode=next; total=MIN[next]*60; remain=total; render();
+    flash('🍅 집중 완료! '+ (next==='long'?'긴 휴식이에요':'짧은 휴식이에요'));
+  }else{
+    mode='focus'; total=MIN.focus*60; remain=total; render();
+    flash('휴식 끝! 다시 집중 25분 💪');
+  }
+  if($('setAuto').checked) start();
+}
+function flash(t){ const m=$('msg'); const old=m.innerHTML; m.innerHTML='<b>'+t+'</b>'; setTimeout(()=>{if(!running||true)render();},2600); }
+function beep(freq,dur){
+  if(!$('setSound').checked) return;
+  try{ const a=new (window.AudioContext||window.webkitAudioContext)();
+    const o=a.createOscillator(), g=a.createGain(); o.connect(g); g.connect(a.destination);
+    o.frequency.value=freq; o.type='sine'; g.gain.value=0.14;
+    o.start(); o.stop(a.currentTime+dur/1000);
+    g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+dur/1000);
+  }catch(e){}
+}
+function toggleSet(){ $('settings').classList.toggle('show'); }
+function applySet(){
+  MIN.focus=Math.max(1,+$('setFocus').value||25);
+  MIN.short=Math.max(1,+$('setShort').value||5);
+  MIN.long=Math.max(1,+$('setLong').value||15);
+  save(); setMode(mode); $('settings').classList.remove('show');
+}
+$('task').addEventListener('input',save);
+render();
+</script>
+</body>
+</html>
