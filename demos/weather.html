@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>날씨 API 체험</title>
+<style>
+  :root{--forest:#1F4A35;--forest2:#2E7D5B;--navy:#1F3A5F;--gold:#8A5E12;
+    --bg:#EAF3F7;--card:#fff;--line:#D5E2E8;--sub:#55605A;--ink:#1B2620;--blue:#2C6E9E;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:600px;margin:0 auto;padding:18px 16px 50px}
+  header{text-align:center;padding:16px 8px 6px}
+  .brand{color:var(--forest2);font-weight:800;font-size:13px;letter-spacing:1px}
+  h1{font-size:25px;margin:6px 0 4px;color:var(--navy);font-weight:800}
+  .lead{color:var(--sub);font-size:15px;margin:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px;margin-top:14px;box-shadow:0 2px 10px rgba(31,74,53,.06)}
+  .lab{font-weight:800;color:var(--navy);margin:0 0 10px;font-size:16px}
+  .cities{display:flex;flex-wrap:wrap;gap:9px}
+  .city{border:2px solid var(--line);background:#fff;border-radius:12px;padding:12px 16px;
+    font-size:17px;font-weight:700;cursor:pointer;color:var(--ink);font-family:inherit}
+  .city:active{transform:scale(.97)}
+  .city.on{border-color:var(--forest2);background:#E7F1EB;color:var(--forest)}
+  .result{text-align:center;padding:8px 0 4px}
+  .emoji{font-size:74px;line-height:1.1}
+  .temp{font-size:52px;font-weight:800;color:var(--navy);margin:2px 0}
+  .desc{font-size:20px;font-weight:700;color:var(--forest2)}
+  .meta{display:flex;justify-content:center;gap:24px;margin-top:12px;flex-wrap:wrap}
+  .meta div{font-size:15px;color:var(--sub)}
+  .meta b{color:var(--ink);font-size:18px;display:block}
+  .loading{text-align:center;color:var(--sub);font-size:16px;padding:20px}
+  .apibox{background:#F4F8FA;border:1px dashed #A9C7D6;border-radius:12px;padding:12px 14px;margin-top:14px}
+  .apibox .t{font-size:13px;font-weight:800;color:var(--blue);margin-bottom:5px}
+  .apiurl{font-family:Consolas,monospace;font-size:11.5px;color:#333;word-break:break-all;
+    background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px;display:block}
+  .note{font-size:12.5px;color:var(--sub);margin-top:8px}
+  .step{background:#FBF4E4;border:1px solid #EAD9A8;border-radius:12px;padding:12px 14px;margin-top:14px;
+    font-size:14px;color:var(--gold);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">커리어숲 · 바이브코딩 실습</div>
+    <h1>🌤️ 날씨 API 체험</h1>
+    <p class="lead">버튼을 누르면, 내 앱이 API로 <b>실시간 날씨</b>를 받아와요!</p>
+  </header>
+
+  <div class="card">
+    <p class="lab">① 도시를 골라보세요</p>
+    <div class="cities" id="cities"></div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none">
+    <p class="lab" id="cityName">② 지금 날씨</p>
+    <div id="result" class="result"></div>
+    <div class="apibox">
+      <div class="t">🔍 방금 이 API 창구에 물어봤어요 (실제 주소)</div>
+      <code class="apiurl" id="apiurl">—</code>
+      <div class="note">이 주소로 <b>기상 서비스(주방)</b>에 물어보니 → 위 날씨 데이터(요리)를 받아온 거예요.
+        나는 날씨를 계산하는 방법을 몰라도, <b>API(종업원)</b>에게 주소로 부탁만 하면 돼요.</div>
+    </div>
+  </div>
+
+  <div class="step">💡 실습 포인트: 도시를 바꿔 눌러보세요. 그때마다 앱이 <b>API에 새로 물어봐서</b> 실시간 날씨가 바뀝니다.
+    이게 바로 “API로 데이터 받아오기”예요! (무료·키 불필요한 Open-Meteo API 사용)</div>
+</div>
+
+<script>
+const CITIES=[
+ {n:"서울",la:37.57,lo:126.98},{n:"부산",la:35.18,lo:129.08},
+ {n:"청양",la:36.46,lo:126.80},{n:"홍성",la:36.60,lo:126.66},
+ {n:"평택",la:36.99,lo:127.09},{n:"오산",la:37.15,lo:127.07},
+ {n:"제주",la:33.50,lo:126.53}
+];
+function wcode(c){
+  if(c===0)return["맑음","☀️"];
+  if(c<=2)return["대체로 맑음","🌤️"];
+  if(c===3)return["흐림","☁️"];
+  if(c===45||c===48)return["안개","🌫️"];
+  if(c>=51&&c<=57)return["이슬비","🌦️"];
+  if(c>=61&&c<=67)return["비","🌧️"];
+  if(c>=71&&c<=77)return["눈","🌨️"];
+  if(c>=80&&c<=82)return["소나기","🌧️"];
+  if(c>=95)return["뇌우","⛈️"];
+  return["ー","🌡️"];
+}
+const wrapC=document.getElementById('cities');
+CITIES.forEach((c,i)=>{
+  const b=document.createElement('button');
+  b.className='city'; b.textContent=c.n;
+  b.onclick=()=>{ document.querySelectorAll('.city').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); loadWeather(c); };
+  wrapC.appendChild(b);
+});
+async function loadWeather(c){
+  const card=document.getElementById('resultCard');
+  const res=document.getElementById('result');
+  card.style.display='block';
+  document.getElementById('cityName').textContent='② '+c.n+' 지금 날씨';
+  res.innerHTML='<div class="loading">API에 물어보는 중… ⏳</div>';
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${c.la}&longitude=${c.lo}`
+    +`&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m`;
+  document.getElementById('apiurl').textContent=url;
+  try{
+    const r=await fetch(url);
+    const j=await r.json();
+    const cur=j.current;
+    const [desc,emo]=wcode(cur.weather_code);
+    res.innerHTML=`
+      <div class="emoji">${emo}</div>
+      <div class="temp">${Math.round(cur.temperature_2m)}°C</div>
+      <div class="desc">${desc}</div>
+      <div class="meta">
+        <div>습도<b>${cur.relative_humidity_2m}%</b></div>
+        <div>바람<b>${cur.wind_speed_10m} km/h</b></div>
+      </div>`;
+  }catch(e){
+    res.innerHTML='<div class="loading">앗, 인터넷 연결을 확인해 주세요 😅<br>(API에 못 물어봤어요)</div>';
+  }
+}
+// (수업용 사본) 시작할 때 자동으로 물어보지 않습니다. 도시 버튼을 눌러야 날씨 서비스에 물어봅니다.
+</script>
+</body>
+</html>

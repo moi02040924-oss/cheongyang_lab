@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>홀랜드 약식 직업선호 진단</title>
+<style>
+  :root{
+    --forest:#1F4A35; --forest2:#2E7D5B; --navy:#1F3A5F; --gold:#8A5E12;
+    --bg:#F4F6F3; --card:#FFFFFF; --line:#DCE5DE; --sub:#55605A; --ink:#1B2620;
+    --R:#C0603A; --I:#2C6E9E; --A:#8A5E12; --S:#2E7D5B; --E:#B3261E; --C:#4A5A8A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:640px;margin:0 auto;padding:16px 16px 60px}
+  header{text-align:center;padding:22px 12px 10px}
+  .brand{color:var(--forest2);font-weight:800;font-size:14px;letter-spacing:1px}
+  h1{font-size:26px;margin:6px 0 4px;color:var(--navy);font-weight:800}
+  .lead{color:var(--sub);font-size:15px;margin:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:20px;margin-top:16px;box-shadow:0 2px 10px rgba(31,74,53,.05)}
+  .startbtn,.navbtn{width:100%;border:none;border-radius:14px;padding:18px;
+    font-size:19px;font-weight:800;cursor:pointer;font-family:inherit}
+  .startbtn{background:var(--forest);color:#fff;margin-top:8px}
+  .name-in{width:100%;padding:14px;font-size:17px;border:2px solid var(--line);
+    border-radius:12px;margin:10px 0 4px;font-family:inherit}
+  .prog-wrap{position:sticky;top:0;background:var(--bg);padding:10px 0 6px;z-index:5}
+  .prog-txt{font-size:14px;color:var(--sub);font-weight:700;margin-bottom:6px;text-align:center}
+  .prog-bar{height:10px;background:var(--line);border-radius:10px;overflow:hidden}
+  .prog-fill{height:100%;background:var(--forest2);width:0;transition:width .25s}
+  .q{font-size:20px;font-weight:700;color:var(--navy);margin:6px 0 18px;min-height:60px;
+    display:flex;align-items:center}
+  .q .num{color:var(--forest2);margin-right:8px;font-weight:800}
+  .opts{display:flex;flex-direction:column;gap:12px}
+  .opt{border:2px solid var(--line);border-radius:14px;padding:15px 16px;font-size:17px;
+    font-weight:700;background:#fff;cursor:pointer;text-align:center;color:var(--ink);
+    font-family:inherit;transition:.12s}
+  .opt.sel{border-color:var(--forest2);background:#E7F1EB;color:var(--forest)}
+  .opt:active{transform:scale(.98)}
+  .backbig{display:block;width:100%;margin-top:16px;padding:14px;border:2px solid var(--forest2);
+    border-radius:12px;background:#F1F5F2;color:var(--forest);font-size:16px;font-weight:800;
+    cursor:pointer;font-family:inherit}
+  .backbig:active{transform:scale(.99)}
+  .backbig:disabled{opacity:.35;cursor:default}
+  /* result */
+  .code-big{text-align:center;font-size:52px;font-weight:800;letter-spacing:4px;color:var(--forest);margin:4px 0}
+  .code-sub{text-align:center;color:var(--sub);font-size:15px;margin-bottom:8px}
+  .bar-row{display:flex;align-items:center;gap:10px;margin:9px 0}
+  .bar-lab{width:96px;font-size:14px;font-weight:800;flex-shrink:0}
+  .bar-track{flex:1;height:22px;background:var(--line);border-radius:8px;overflow:hidden}
+  .bar-val{height:100%;border-radius:8px;transition:width .8s;display:flex;align-items:center;
+    justify-content:flex-end;padding-right:8px;color:#fff;font-size:12px;font-weight:800}
+  .tblock{border-left:5px solid var(--forest2);background:#F3F8F5;border-radius:0 12px 12px 0;
+    padding:14px 16px;margin:14px 0}
+  .tblock h3{margin:0 0 6px;font-size:19px;color:var(--navy)}
+  .tblock .role{font-size:14px;color:var(--forest2);font-weight:800}
+  .tblock p{margin:6px 0 0;font-size:15px;color:var(--ink)}
+  .jobs{margin-top:8px;font-size:15px}
+  .jobs b{color:var(--gold)}
+  .foot{text-align:center;color:var(--sub);font-size:13px;margin-top:22px;line-height:1.7}
+  .hide{display:none}
+  .subrow{display:flex;gap:8px;margin:7px 0;font-size:14.5px;align-items:flex-start}
+  .subrow .k{flex-shrink:0;width:82px;font-weight:800;color:var(--forest2)}
+  .subrow .v{flex:1;color:var(--ink)}
+  .jobchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chip{background:#FBF4E4;color:var(--gold);border:1px solid #EAD9A8;border-radius:20px;
+    padding:5px 11px;font-size:13px;font-weight:700}
+  .note-block{background:#F3F8F5;border-radius:12px;padding:13px 15px;font-size:14.5px;margin-top:6px}
+  .note-block b{color:var(--navy)}
+  @media(max-width:400px){h1{font-size:23px}.q{font-size:18px}.opt{font-size:17px;padding:16px}
+    .subrow .k{width:70px}}
+  @media print{
+    body{background:#fff}
+    .no-print,.back,.prog-wrap{display:none!important}
+    .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid;page-break-inside:avoid}
+    .startbtn{display:none!important}
+    header{padding-top:0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 시작 -->
+  <section id="intro">
+    <header>
+      <div class="brand">커리어숲 · CAREER FOREST</div>
+      <h1>홀랜드 약식 직업선호 진단</h1>
+      <p class="lead">30문항 · 약 3분 · 나의 직업 흥미유형(RIASEC) 찾기</p>
+    </header>
+    <div class="card">
+      <p style="margin:0 0 4px;font-weight:700;color:var(--navy)">이름(선택)</p>
+      <input class="name-in" id="uname" placeholder="예: 홍길동 (안 적어도 됩니다)" autocomplete="off">
+      <p style="font-size:14px;color:var(--sub);margin:6px 0 0">
+        각 문장을 읽고 <b>매우 그렇다 ~ 전혀 아니다</b> 5단계 중 지금 마음에 가까운 것을 고르세요.
+        정답은 없습니다. 너무 오래 고민하지 말고 첫 느낌으로! (중간에 <b>이전으로 돌아가기</b> 가능)</p>
+      <button class="startbtn" onclick="start()">진단 시작하기 ▶</button>
+      <p style="font-size:12px;color:var(--sub);text-align:center;margin:12px 0 0">
+        ※ 본 도구는 홀랜드(Holland) RIASEC 이론에 기반한 <b>약식 자가진단</b>입니다.
+        공식 표준화 검사가 아니며 참고용입니다. 입력 정보는 이 기기 밖으로 전송되지 않습니다.</p>
+    </div>
+  </section>
+
+  <!-- 문항 -->
+  <section id="quiz" class="hide">
+    <div class="prog-wrap">
+      <div class="prog-txt"><span id="pnum">1</span> / 30</div>
+      <div class="prog-bar"><div class="prog-fill" id="pfill"></div></div>
+    </div>
+    <div class="card">
+      <div class="q"><span class="num" id="qnum">Q1.</span><span id="qtext"></span></div>
+      <div class="opts">
+        <button class="opt" data-v="4" onclick="answer(4,this)">매우 그렇다</button>
+        <button class="opt" data-v="3" onclick="answer(3,this)">그렇다</button>
+        <button class="opt" data-v="2" onclick="answer(2,this)">보통이다</button>
+        <button class="opt" data-v="1" onclick="answer(1,this)">아니다</button>
+        <button class="opt" data-v="0" onclick="answer(0,this)">전혀 아니다</button>
+      </div>
+      <button class="backbig" id="backbtn" onclick="goBack()">← 이전 문항으로 돌아가기</button>
+    </div>
+  </section>
+
+  <!-- 결과 -->
+  <section id="result" class="hide">
+    <header>
+      <div class="brand">진단 결과</div>
+      <h1 id="rname">나의 직업 흥미유형</h1>
+    </header>
+    <div class="card">
+      <div class="code-big" id="rcode">—</div>
+      <div class="code-sub">나의 홀랜드 코드 (상위 2유형)</div>
+      <div style="text-align:center;margin:6px 0 2px"><svg id="hex" viewBox="0 0 300 280" width="100%" style="max-width:340px"></svg></div>
+      <div id="bars"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 4px;color:var(--navy);font-size:20px">🔷 육각형 모양 해석</h2>
+      <div id="shape"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 4px;color:var(--navy);font-size:20px">↔️ 대각선(반대유형) 해석</h2>
+      <div id="oppo"></div>
+    </div>
+    <div class="card">
+      <h2 style="margin:0 0 4px;color:var(--navy);font-size:20px">유형별 상세 해석 & 추천</h2>
+      <div id="interp"></div>
+    </div>
+    <div class="card" style="background:#F3F8F5">
+      <h2 style="margin:0 0 6px;color:var(--forest);font-size:19px">🌳 커리어숲 종합 코멘트</h2>
+      <p id="comment" style="margin:0;font-size:15px"></p>
+    </div>
+    <div class="note-block no-print" style="background:#FBF4E4;border:1px solid #EAD9A8">
+      <b style="color:var(--gold)">📱 결과 저장은 ‘화면 캡처(스크린샷)’가 가장 확실해요</b><br>
+      <span style="font-size:14px">안드로이드: <b>전원+음량↓</b> 동시 · 아이폰: <b>전원+음량↑</b> 동시 → 캡처본을 상담사에게 전송</span>
+    </div>
+    <button class="startbtn no-print" style="margin-top:12px;background:var(--navy)" onclick="copyResult(this)">📋 결과 요약 복사하기</button>
+    <button class="startbtn no-print" style="margin-top:10px;background:#4A5A8A" onclick="printResult()">🖨️ 인쇄 / PDF (PC에서 권장)</button>
+    <div id="sumbox" class="note-block no-print" style="display:none;margin-top:10px">
+      <div style="font-size:13px;color:var(--sub);margin-bottom:4px">아래 내용을 길게 눌러 복사할 수도 있어요 👇</div>
+      <textarea id="sumtext" readonly style="width:100%;height:120px;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:inherit;font-size:13px;resize:none"></textarea>
+    </div>
+    <button class="startbtn no-print" style="margin-top:12px" onclick="location.reload()">🔄 다시 진단하기</button>
+    <p class="foot">커리어숲 · 홀랜드 약식 진단 v1<br>상담 시 참고용 · 정밀 진단은 표준화 검사를 권장합니다</p>
+  </section>
+
+</div>
+<script>
+// ===== RIASEC 유형 정의 =====
+const T = {
+  R:{name:"실재형",eng:"Realistic",role:"손·도구·몸으로 하는 일",color:"#C0603A",
+     desc:"기계·도구·자연·신체 활동을 좋아하고, 눈에 보이는 결과를 만들 때 보람을 느낍니다. 실용적이고 솔직하며 손재주가 있습니다.",
+     jobs:["자동차·기계 정비","전기·설비 기사","조리사·제과제빵","목공·가구제작","농업·원예·스마트팜","화물·택배 운전","건물·시설 관리","인테리어 시공","반려동물 미용","용접·금속가공"]},
+  I:{name:"탐구형",eng:"Investigative",role:"분석·연구·탐구하는 일",color:"#2C6E9E",
+     desc:"원인을 파고들고 자료를 분석하는 것을 좋아합니다. 논리적·호기심 많고 스스로 해답을 찾는 데 강합니다.",
+     jobs:["데이터 분석가","IT 개발·코딩","품질관리(QC)","의료기사·검사","직업상담 진단","시장조사 분석","회계·세무 감사","임상·실험 연구","교육콘텐츠 기획","환경·안전 분석"]},
+  A:{name:"예술형",eng:"Artistic",role:"창작·표현하는 일",color:"#8A5E12",
+     desc:"자유롭게 표현하고 새로운 것을 만드는 데 끌립니다. 감성적·독창적이며 틀에 박힌 일을 답답해합니다.",
+     jobs:["그래픽·편집 디자이너","카피라이터·작가","플로리스트","사진작가","영상 편집·유튜브","공예·핸드메이드 작가","웹툰·일러스트","인테리어 디자인","SNS 콘텐츠 크리에이터","캘리그라피·POP 강사"]},
+  S:{name:"사회형",eng:"Social",role:"사람을 돕고 가르치는 일",color:"#2E7D5B",
+     desc:"사람과 어울리고 돕고 가르칠 때 힘이 납니다. 공감 능력이 높고 따뜻하며 협력을 잘합니다.",
+     jobs:["직업상담사","사회복지사","요양보호사","평생교육·방과후 강사","코치·멘토","간호조무사","고객상담·CS","유아·아동 교사","심리상담사","커뮤니티 매니저"]},
+  E:{name:"진취형",eng:"Enterprising",role:"설득·주도·경영하는 일",color:"#B3261E",
+     desc:"목표를 세워 사람을 이끌고 설득하는 것을 즐깁니다. 도전적·활동적이며 성과와 리더 역할을 좋아합니다.",
+     jobs:["매장운영·자영업","영업·영업관리","마케팅 기획","창업 컨설턴트","공인중개·부동산","프랜차이즈 점주","이벤트·행사 기획","보험·금융 설계","홍보·PR","온라인쇼핑몰 운영"]},
+  C:{name:"관습형",eng:"Conventional",role:"정리·관리·규칙 다루는 일",color:"#4A5A8A",
+     desc:"자료를 체계적으로 정리하고 규칙을 지켜 정확히 처리하는 데 강합니다. 꼼꼼하고 성실하며 안정적입니다.",
+     jobs:["경리·회계","총무·사무행정","세무 보조","데이터 입력·관리","재고·물류 관리","은행·창구 업무","문서·기록 관리","병원 원무","공공기관 행정","품질기록·인증 관리"]}
+};
+// 확장 해석: 대인관계 / 문제해결방식 / 일처리방식
+const EXT = {
+  R:{rel:"말보다 행동으로 마음을 표현합니다. 많은 사람과 두루 어울리기보다 소수와 깊고 오래 신뢰를 쌓는 편이라, 나서서 이끌기보다 묵묵히 제 몫을 해내며 인정을 얻습니다.",
+     solve:"머리로만 따지기보다 직접 부딪쳐 보며 몸으로 익힙니다. 이론보다 실전·시행착오를 통해 배우고, 지금 당장 손에 잡히는 현실적인 해법을 빠르게 찾아냅니다.",
+     work:"일을 순서대로, 눈에 보이는 결과가 남도록 처리할 때 만족합니다. 화려한 말보다 성실함과 손끝의 완성도로 승부하며, 한번 맡으면 끝까지 책임집니다."},
+  I:{rel:"깊이 있는 대화를 좋아하고 가벼운 잡담은 다소 어색해합니다. 혼자만의 시간과 공간이 꼭 필요한 독립형이며, 감정보다 논리와 근거로 사람을 설득합니다.",
+     solve:"성급히 결론 내지 않고 원인부터 차분히 분석합니다. 데이터·근거를 중시하고, 남들이 놓친 부분까지 파고들어 ‘왜 그런가’를 끝까지 확인해야 직성이 풀립니다.",
+     work:"계획과 분석을 먼저 세운 뒤 움직입니다. 마감 속도보다 정확성·완성도를 우선하며, 간섭 없이 자율적으로 맡겨질 때 가장 능률이 오릅니다."},
+  A:{rel:"감수성이 풍부해 분위기와 사람의 기분에 민감합니다. 형식적이고 딱딱한 관계는 답답해하며, 자유로운 관계 속에서 자신의 개성을 존중받고 싶어 합니다.",
+     solve:"직관과 번뜩이는 아이디어로 접근합니다. 정해진 틀을 벗어난 창의적 해법을 잘 내지만, 영감에 따라 기복이 있어 컨디션의 영향을 받는 편입니다.",
+     work:"틀에 갇히면 능률이 뚝 떨어지고, 몰입하면 폭발적인 성과를 냅니다. 남의 리듬보다 자기만의 리듬으로 일할 때 가장 좋은 결과가 나옵니다."},
+  S:{rel:"공감과 경청 능력이 뛰어나 사람들 사이를 조율하는 분위기 메이커입니다. 남을 먼저 챙기다 보니 갈등을 피하려는 경향이 있어, 자기 감정을 뒤로 미루기도 합니다.",
+     solve:"문제를 혼자 끌어안기보다 대화와 협력으로 풉니다. 해법을 찾을 때도 사람들의 감정을 먼저 살피고, 모두가 납득하는 방향을 함께 만들어 갑니다.",
+     work:"혼자보다 팀 안에서 능률이 오릅니다. 서로 돕고 나누는 환경에서 힘이 나며, 사람을 돕는 일이라는 ‘의미’가 있을 때 가장 오래 지속합니다."},
+  E:{rel:"사교적이고 주도적이라 첫인상이 좋고 인맥이 넓습니다. 사람을 이끌고 설득하는 데 능하며, 목표를 중심으로 관계를 활발하게 넓혀 갑니다.",
+     solve:"빠르게 결단하고 밀어붙이는 추진력이 강점입니다. 세부보다 큰 그림과 기회를 먼저 보고, 일단 움직이면서 방향을 잡아 나갑니다.",
+     work:"목표와 성과 중심으로 일합니다. 경쟁 상황에서 오히려 힘이 나고, 지시·위임을 잘하지만 변화 없는 반복 업무는 금세 지루해합니다."},
+  C:{rel:"예의와 질서를 지키고 약속·신뢰를 무엇보다 중시합니다. 튀기보다 안정적으로 처신하며, 시끄러운 자리보다 조용하고 예측 가능한 관계를 편안해합니다.",
+     solve:"규정·전례·검증된 방법을 따라 안전하게 해결합니다. 위험을 피하고 꼼꼼히 점검하며, 돌다리도 두드려 실수 없이 마무리하는 것을 중요하게 여깁니다.",
+     work:"정확하고 체계적으로 처리하며 마감과 규칙을 잘 지킵니다. 반복적인 일도 성실히 해내지만, 급변하거나 규칙이 무너지는 상황에서는 스트레스를 받습니다."}
+};
+// 육각형 배치(홀랜드): R-I-A-S-E-C 순환. 반대(대각선) 쌍: R↔S, I↔E, A↔C
+const HEXORDER = ["R","I","A","S","E","C"];
+const OPP = {R:"S",S:"R",I:"E",E:"I",A:"C",C:"A"};
+// ===== 문항(각 유형 5개, 원저작권 없는 자체 문항) =====
+const Q = [
+  ["R","기계나 도구를 직접 다루거나 고치는 일이 재미있다"],
+  ["I","어떤 현상이 왜 그런지 원인을 파고드는 것이 좋다"],
+  ["A","나만의 방식으로 무언가를 만들거나 꾸미는 것을 좋아한다"],
+  ["S","다른 사람의 고민을 들어주고 돕는 일이 보람 있다"],
+  ["E","여러 사람을 이끌고 목표를 향해 밀고 나가는 것이 좋다"],
+  ["C","자료나 물건을 규칙에 맞게 정리·정돈할 때 마음이 편하다"],
+
+  ["R","몸을 움직이거나 손으로 하는 활동이 앉아서 하는 일보다 좋다"],
+  ["I","숫자·자료를 분석해 결론을 내는 일이 흥미롭다"],
+  ["A","글·그림·음악·사진 등으로 표현하는 활동에 끌린다"],
+  ["S","누군가를 가르치거나 안내하는 역할이 잘 맞는다"],
+  ["E","새로운 사업이나 아이디어로 사람을 설득하는 것이 즐겁다"],
+  ["C","맡은 일을 정해진 절차대로 정확히 처리하는 편이다"],
+
+  ["R","실제로 만들어지거나 눈에 보이는 결과물이 있는 일이 좋다"],
+  ["I","호기심이 생기면 끝까지 알아봐야 직성이 풀린다"],
+  ["A","정해진 틀보다 자유롭게 일하는 환경이 더 좋다"],
+  ["S","팀에서 사람들 사이를 조율하고 화합시키는 편이다"],
+  ["E","경쟁에서 이기거나 성과를 내는 것에 동기가 생긴다"],
+  ["C","꼼꼼하게 확인하고 실수 없이 마무리하는 것을 중요하게 여긴다"],
+
+  ["R","기계·장비·자동차·공구 같은 것에 관심이 많다"],
+  ["I","복잡한 문제를 논리적으로 푸는 과정 자체가 즐겁다"],
+  ["A","독창적이고 남들과 다른 아이디어를 자주 떠올린다"],
+  ["S","사람들과 어울리며 함께하는 일이 혼자 하는 일보다 좋다"],
+  ["E","기회가 오면 앞장서서 책임지고 이끄는 편이다"],
+  ["C","계획표·목록을 만들어 순서대로 일하는 것이 편하다"],
+
+  ["R","야외·현장에서 몸으로 하는 작업이 잘 맞는다"],
+  ["I","전문 지식을 깊이 공부하고 탐구하는 것을 좋아한다"],
+  ["A","분위기·색·디자인 같은 감각적인 요소에 예민하다"],
+  ["S","봉사·돌봄처럼 사람에게 도움이 되는 일에 마음이 간다"],
+  ["E","돈을 벌거나 사업을 키우는 일에 관심이 크다"],
+  ["C","돈·서류·일정 등을 빈틈없이 관리하는 데 자신 있다"]
+];
+// 문항 순서 섞기(유형이 연달아 안 나오게: 이미 6주기 배치)
+const order = [...Q.keys()];
+
+let idx=0, ans={}, uname="";
+function start(){
+  uname=document.getElementById('uname').value.trim();
+  document.getElementById('intro').classList.add('hide');
+  document.getElementById('quiz').classList.remove('hide');
+  idx=0; ans={}; render();
+}
+function render(){
+  const qi=order[idx], q=Q[qi];
+  document.getElementById('qnum').textContent="Q"+(idx+1)+".";
+  document.getElementById('qtext').textContent=q[1];
+  document.getElementById('pnum').textContent=idx+1;
+  document.getElementById('pfill').style.width=((idx)/Q.length*100)+"%";
+  document.getElementById('backbtn').disabled = (idx===0);
+  document.querySelectorAll('.opt').forEach(o=>{
+    o.classList.toggle('sel', ans[qi]!==undefined && Number(o.dataset.v)===ans[qi]);
+  });
+}
+function answer(v,el){
+  const qi=order[idx]; ans[qi]=v;
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  setTimeout(()=>{ if(idx<Q.length-1){idx++;render();} else finish(); },180);
+}
+function goBack(){ if(idx>0){idx--;render();} }
+function finish(){
+  // 점수 합산
+  const score={R:0,I:0,A:0,S:0,E:0,C:0};
+  Q.forEach((q,i)=>{ score[q[0]] += (ans[i]||0); });
+  const max=20; // 유형당 5문항 × 4점(5점 척도)
+  const sorted=Object.keys(score).sort((a,b)=>score[b]-score[a]);
+  const top3=sorted.slice(0,2);
+  const code=top3.join("");
+  document.getElementById('quiz').classList.add('hide');
+  document.getElementById('result').classList.remove('hide');
+  document.getElementById('rname').textContent = (uname? uname+"님의 ":"") + "직업 흥미유형";
+  document.getElementById('rcode').textContent = code;
+  document.getElementById('rcode').innerHTML = top3.map(k=>`<span style="color:${T[k].color}">${k}</span>`).join("");
+  // 막대
+  const bars=document.getElementById('bars'); bars.innerHTML="";
+  sorted.forEach(k=>{
+    const pct=Math.round(score[k]/max*100);
+    bars.insertAdjacentHTML('beforeend',
+     `<div class="bar-row"><div class="bar-lab" style="color:${T[k].color}">${k} ${T[k].name}</div>
+      <div class="bar-track"><div class="bar-val" style="background:${T[k].color};width:0" data-w="${pct}">${pct}%</div></div></div>`);
+  });
+  setTimeout(()=>document.querySelectorAll('.bar-val').forEach(b=>b.style.width=b.dataset.w+"%"),80);
+
+  // ===== 육각형(레이더) 그리기 =====
+  drawHex(score,max);
+
+  // ===== 육각형 모양 해석: 변별성 + 일관성 =====
+  const vals=HEXORDER.map(k=>score[k]);
+  const hi=Math.max(...vals), lo=Math.min(...vals), gap=hi-lo;
+  // 변별성
+  let diffTxt, diffTag;
+  if(gap>=8){ diffTag="뚜렷한 별 모양 (변별성 높음)";
+    diffTxt="특정 유형이 확실히 튀어나온 <b>뾰족한 별 모양</b>입니다. 흥미와 강점이 분명해 진로 방향을 좁히기 쉽습니다. 상위 유형을 중심으로 밀고 나가면 몰입도와 성취가 큽니다."; }
+  else if(gap>=4){ diffTag="균형 잡힌 모양 (변별성 보통)";
+    diffTxt="몇 개 유형이 함께 두드러지는 <b>균형 잡힌 모양</b>입니다. 주된 흥미가 있으면서 곁가지 관심도 살아 있어, 상위 2~3유형을 조합한 진로에서 강점이 납니다."; }
+  else { diffTag="둥글고 평평한 모양 (변별성 낮음·탐색기)";
+    diffTxt="유형 간 점수 차이가 작아 <b>둥글고 평평한 모양</b>입니다. 다재다능하다는 뜻일 수도, 아직 흥미가 또렷이 자리 잡기 전(탐색기)일 수도 있습니다. 다양한 경험을 직접 해 보며 ‘해 보니 좋았던 것’으로 좁혀 가길 권합니다."; }
+  // 일관성(top2 육각형 거리)
+  const p1=HEXORDER.indexOf(top3[0]), p2=HEXORDER.indexOf(top3[1]);
+  let d=Math.abs(p1-p2); d=Math.min(d,6-d); // 순환 거리 0~3
+  let consTag, consTxt;
+  if(d<=1){ consTag="일관성 높음 (이웃한 유형)";
+    consTxt="상위 두 유형이 육각형에서 <b>이웃</b>해 있어 서로 잘 어울립니다. 두 흥미가 자연스럽게 시너지를 내는 조합이라, 진로가 한 방향으로 또렷하게 모입니다."; }
+  else if(d===2){ consTag="일관성 보통";
+    consTxt="상위 두 유형이 <b>적당히 떨어져</b> 있습니다. 성격이 조금 다른 두 흥미가 만나 폭이 넓어지는 편이며, 둘을 이어 줄 ‘연결 고리’ 역할의 일에서 강점이 납니다."; }
+  else { consTag="일관성 낮음 (마주 보는 유형)";
+    consTxt="상위 두 유형이 육각형에서 <b>거의 마주 보는(대각선)</b> 위치라 성향이 상반됩니다. 흔치 않은 개성 있는 조합이며, 두 세계를 오가는 독특한 강점이 되지만, 진로를 정할 땐 어느 쪽을 주로 삼을지 조율이 필요합니다."; }
+  document.getElementById('shape').innerHTML =
+    `<div class="note-block"><b>① 변별성 — ${diffTag}</b><br>${diffTxt}</div>`+
+    `<div class="note-block"><b>② 일관성 — ${consTag}</b><br>${consTxt}</div>`;
+
+  // ===== 대각선(반대유형) 해석 =====
+  const rep=top3[0], opp=OPP[rep];
+  const oppRank=sorted.indexOf(opp)+1, oppPct=Math.round(score[opp]/max*100), repPct=Math.round(score[rep]/max*100);
+  let oppTxt;
+  if(score[opp]>=score[rep]*0.7){
+    oppTxt=`대표유형 <b style="color:${T[rep].color}">${T[rep].name}</b>(${repPct}%)와 정반대인 <b style="color:${T[opp].color}">${T[opp].name}</b>(${oppPct}%)이 <b>둘 다 높게</b> 나왔습니다. 상반된 두 욕구가 마음속에 함께 있는 <b>양면형</b>입니다. 상황에 따라 다른 모습이 나와 스스로 헷갈릴 수 있지만, 그만큼 폭넓게 적응하는 힘이 있습니다. ‘${T[rep].role}’과 ‘${T[opp].role}’ 사이에서 균형점을 찾는 일이 잘 맞습니다.`;
+  } else if(score[opp]<=max*0.3){
+    oppTxt=`대표유형 <b style="color:${T[rep].color}">${T[rep].name}</b>(${repPct}%)와 정반대인 <b style="color:${T[opp].color}">${T[opp].name}</b>은 ${oppPct}%로 <b>뚜렷하게 낮습니다</b>. 방향이 아주 분명하다는 뜻입니다. 다만 반대편 영역(‘${T[opp].role}’)의 일은 에너지 소모가 크니, 그런 일은 도구·동료의 도움으로 보완하고 강점 영역에 집중하는 편이 유리합니다.`;
+  } else {
+    oppTxt=`대표유형 <b style="color:${T[rep].color}">${T[rep].name}</b>(${repPct}%)와 정반대인 <b style="color:${T[opp].color}">${T[opp].name}</b>은 ${oppPct}%(${oppRank}순위)로 <b>중간 수준</b>입니다. 주된 방향은 ${T[rep].name} 쪽이 분명하되, 반대 성향도 어느 정도 갖춰 필요할 때 꺼내 쓸 수 있는 균형형입니다.`;
+  }
+  document.getElementById('oppo').innerHTML =
+    `<p style="font-size:13.5px;color:var(--sub);margin:0 0 8px">홀랜드 육각형에서 마주 보는 쌍(R↔S, I↔E, A↔C)은 성향이 정반대입니다. 대표유형과 그 반대유형의 점수를 함께 보면 성향의 ‘폭’을 읽을 수 있습니다.</p>`+
+    `<div class="note-block">${oppTxt}</div>`;
+
+  // ===== 유형별 상세 해석 & 추천 =====
+  const ip=document.getElementById('interp'); ip.innerHTML="";
+  top3.forEach((k,i)=>{
+    const t=T[k], e=EXT[k];
+    ip.insertAdjacentHTML('beforeend',
+     `<div class="tblock" style="border-color:${t.color}">
+        <span class="role">${i===0?'★ 대표유형':'제'+(i+1)+'유형'} · ${t.role}</span>
+        <h3 style="color:${t.color}">${k} ${t.name} (${t.eng})</h3>
+        <p>${t.desc}</p>
+        <div class="subrow"><div class="k">👥 대인관계</div><div class="v">${e.rel}</div></div>
+        <div class="subrow"><div class="k">🧩 문제해결</div><div class="v">${e.solve}</div></div>
+        <div class="subrow"><div class="k">📋 일처리</div><div class="v">${e.work}</div></div>
+        <div class="jobs"><b>어울리는 일 10:</b><div class="jobchips">${t.jobs.map(j=>`<span class="chip">${j}</span>`).join("")}</div></div>
+      </div>`);
+  });
+  // 두 유형 조합 해석
+  const cA=T[top3[0]], cB=T[top3[1]];
+  const combo=cA.jobs.filter(j=>cB.jobs.includes(j));
+  ip.insertAdjacentHTML('beforeend',
+    `<div class="note-block" style="background:#EAF1FB;border:1px solid #B5D4F4;margin-top:12px">
+       <b style="color:var(--navy)">🔗 두 유형을 함께 보면 (${top3[0]}+${top3[1]} 조합 해석)</b><br>
+       <span style="font-size:14.5px">대표 <b style="color:${cA.color}">${cA.name}</b>의 ‘${cA.role}’과 보조 <b style="color:${cB.color}">${cB.name}</b>의 ‘${cB.role}’이 <b>동시에 필요한 일</b>에서 강점이 가장 크게 발휘됩니다. 어느 한쪽만 있는 일보다, 두 성향을 함께 쓰는 자리를 먼저 찾아보세요.</span>
+       ${combo.length?`<br><span style="font-size:14px;color:var(--gold)"><b>두 유형이 겹치는 추천:</b> ${combo.join(', ')}</span>`:''}
+     </div>`);
+
+  // ===== 종합 코멘트 =====
+  const a=T[top3[0]], b=T[top3[1]];
+  document.getElementById('comment').innerHTML =
+    `${uname?uname+'님은 ':''}<b style="color:${a.color}">${a.name}</b> 성향이 가장 강하고, `+
+    `<b style="color:${b.color}">${b.name}</b> 성향이 이를 받쳐줍니다(코드 <b>${code}</b>). `+
+    `‘${a.role}’과 ‘${b.role}’이 만나는 지점에서 강점이 나옵니다. `+
+    `위 <b>육각형 모양</b>과 <b>반대유형</b> 해석까지 함께 보시면, 지금이 방향을 좁힐 때인지·넓힐 때인지가 보입니다. `+
+    `재취업·창업 방향을 정할 때 <b>상위 두 유형이 겹치는 일자리·업종</b>부터 살펴보시길 권합니다. `+
+    `약식 자가진단이니, 오늘 상담에서 실제 경험·현실 여건과 함께 맞춰 최종 방향을 잡아 보겠습니다.`;
+  // 복사용 요약 저장
+  window.__summary =
+    `[홀랜드 약식 직업선호 진단 결과]\n`+
+    (uname? `이름: ${uname}\n`:``)+
+    `홀랜드 코드: ${code}\n`+
+    `\n[상위 2유형]\n`+
+    sorted.slice(0,2).map((k,i)=>`${i+1}. ${k} ${T[k].name} — ${Math.round(score[k]/max*100)}%`).join('\n')+
+    `\n\n[전체 점수]\n`+
+    sorted.map(k=>`${k} ${T[k].name}: ${Math.round(score[k]/max*100)}%`).join('  /  ')+
+    `\n\n[대표유형 추천직업]\n${T[top3[0]].jobs.join(', ')}\n\n(커리어숲 홀랜드 약식 자가진단 · 참고용)`;
+  window.scrollTo(0,0);
+}
+function copyResult(btn){
+  const txt=window.__summary||'';
+  const ta=document.getElementById('sumtext');
+  document.getElementById('sumbox').style.display='block';   // 항상 복사칸 노출
+  ta.value=txt; ta.focus(); ta.select();
+  try{ ta.setSelectionRange(0, txt.length); }catch(e){}
+  let ok=false;
+  try{ ok=document.execCommand('copy'); }catch(e){}
+  try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).catch(()=>{}); ok=true; } }catch(e){}
+  btn.textContent = ok ? '✅ 복사됨! 카톡에 붙여넣기' : '아래 칸을 길게 눌러 전체 복사하세요 👇';
+  setTimeout(()=>{ btn.textContent='📋 결과 요약 복사하기'; }, 3000);
+}
+function printResult(){
+  try{ window.print(); }
+  catch(e){ alert('휴대폰에서는 인쇄 대신 화면 캡처(스크린샷)로 저장해 주세요.'); }
+}
+// ===== 육각형 레이더 차트 =====
+function drawHex(score,max){
+  const cx=150, cy=140, R=100;
+  const labs=["R 실재","I 탐구","A 예술","S 사회","E 진취","C 관습"];
+  const ang=i=>(-90 + i*60)*Math.PI/180; // 12시부터 시계방향
+  const pt=(i,r)=>[cx+Math.cos(ang(i))*r, cy+Math.sin(ang(i))*r];
+  let svg="";
+  // 배경 그리드(4겹)
+  for(let g=1;g<=4;g++){
+    const r=R*g/4, p=HEXORDER.map((_,i)=>pt(i,r).join(",")).join(" ");
+    svg+=`<polygon points="${p}" fill="none" stroke="#DCE5DE" stroke-width="1"/>`;
+  }
+  // 축선
+  HEXORDER.forEach((_,i)=>{ const[x,y]=pt(i,R); svg+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#DCE5DE" stroke-width="1"/>`; });
+  // 데이터 폴리곤
+  const dp=HEXORDER.map((k,i)=>pt(i, R*score[k]/max).join(",")).join(" ");
+  svg+=`<polygon points="${dp}" fill="rgba(46,125,91,.28)" stroke="#2E7D5B" stroke-width="2.5"/>`;
+  // 꼭짓점 점 + 라벨
+  HEXORDER.forEach((k,i)=>{
+    const[dx,dy]=pt(i, R*score[k]/max);
+    svg+=`<circle cx="${dx}" cy="${dy}" r="3.5" fill="${T[k].color}"/>`;
+    const[lx,ly]=pt(i, R+22);
+    svg+=`<text x="${lx}" y="${ly}" font-size="12.5" font-weight="800" fill="${T[k].color}" text-anchor="middle" dominant-baseline="middle">${labs[i]}</text>`;
+  });
+  document.getElementById('hex').innerHTML=svg;
+}
+</script>
+</body>
+</html>

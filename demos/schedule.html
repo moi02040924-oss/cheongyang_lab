@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나의 일정·약속 관리</title>
+<style>
+  :root{--forest:#1F4A35;--forest2:#2E7D5B;--navy:#1F3A5F;--gold:#8A5E12;--red:#B3261E;
+    --bg:#F1F5F2;--card:#fff;--line:#DCE5DE;--sub:#55605A;--ink:#1B2620;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕",system-ui,sans-serif;line-height:1.5}
+  .wrap{max-width:600px;margin:0 auto;padding:18px 16px 60px}
+  header{text-align:center;padding:14px 8px 4px}
+  .brand{color:var(--forest2);font-weight:800;font-size:13px;letter-spacing:1px}
+  h1{font-size:25px;margin:6px 0 3px;color:var(--navy);font-weight:800}
+  .lead{color:var(--sub);font-size:14px;margin:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:16px;margin-top:14px;box-shadow:0 2px 10px rgba(31,74,53,.05)}
+  label{display:block;font-weight:800;color:var(--navy);font-size:14px;margin:8px 0 4px}
+  input,textarea{width:100%;padding:12px;font-size:16px;border:2px solid var(--line);
+    border-radius:10px;font-family:inherit}
+  textarea{height:52px;resize:none}
+  .row2{display:flex;gap:10px}
+  .row2>div{flex:1}
+  .addbtn{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;
+    background:var(--forest);color:#fff;font-size:18px;font-weight:800;cursor:pointer;font-family:inherit}
+  .addbtn:active{transform:scale(.99)}
+  .err{color:var(--red);font-size:13px;font-weight:700;margin-top:6px;min-height:18px}
+  .listhead{font-weight:800;color:var(--navy);font-size:17px;margin:20px 4px 6px}
+  .empty{text-align:center;color:var(--sub);padding:24px;font-size:15px}
+  .item{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);
+    border-left:6px solid var(--forest2);border-radius:0 12px 12px 0;padding:13px 14px;margin-top:10px}
+  .item.done{opacity:.5;border-left-color:#9AA5A0}
+  .item.today{border-left-color:var(--gold);background:#FBF9F0}
+  .item.past{border-left-color:#B9C2BC}
+  .dday{flex-shrink:0;text-align:center;min-width:56px}
+  .dday .d{font-size:18px;font-weight:800;color:var(--forest2)}
+  .dday.today .d{color:var(--gold)}
+  .dday.past .d{color:#9AA5A0}
+  .dday .dt{font-size:11px;color:var(--sub)}
+  .it-body{flex:1;min-width:0}
+  .it-title{font-size:17px;font-weight:800;color:var(--ink)}
+  .item.done .it-title{text-decoration:line-through}
+  .it-meta{font-size:13px;color:var(--sub);margin-top:2px}
+  .it-memo{font-size:13.5px;color:var(--ink);margin-top:4px}
+  .it-btns{display:flex;flex-direction:column;gap:6px}
+  .mini{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 9px;
+    font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;color:var(--sub);white-space:nowrap}
+  .mini.done-b{color:var(--forest2);border-color:var(--forest2)}
+  .mini.del{color:var(--red);border-color:#E0B4B4}
+  .tip{font-size:12.5px;color:var(--sub);text-align:center;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">커리어숲 · 바이브코딩 실습</div>
+    <h1>🗓️ 나의 일정·약속 관리</h1>
+    <p class="lead">출강 · 병원 · 모임 · 약속 무엇이든! (내 폰·컴퓨터에 저장돼요)</p>
+  </header>
+
+  <div class="card">
+    <label>무슨 일정인가요?</label>
+    <input id="title" placeholder="예: 홍성 강의 / 김이박 병원 / 계모임" autocomplete="off">
+    <div class="row2">
+      <div><label>날짜</label><input id="date" type="date"></div>
+      <div><label>시간(선택)</label><input id="time" type="time"></div>
+    </div>
+    <label>메모(선택)</label>
+    <textarea id="memo" placeholder="예: 준비물, 장소, 연락처 등"></textarea>
+    <button class="addbtn" onclick="addItem()">＋ 일정 추가하기</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="listhead">📌 다가오는 일정</div>
+  <div id="list"></div>
+
+  <p class="tip">💡 실습 포인트: 이 앱은 <b>서버·API 없이</b> 내 기기에만 저장돼요(오프라인 OK).
+    “구글 캘린더에 자동으로 넣기”까지 하려면 → 그때 <b>API</b>가 등장합니다!</p>
+</div>
+
+<script>
+const KEY='soop_schedule_v1';
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||[]; }catch(e){ return []; } }
+function save(a){ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){} }
+let items=load();
+
+function addItem(){
+  const t=document.getElementById('title').value.trim();
+  const d=document.getElementById('date').value;
+  const tm=document.getElementById('time').value;
+  const m=document.getElementById('memo').value.trim();
+  const err=document.getElementById('err');
+  if(!t){ err.textContent='‘무슨 일정인가요?’를 적어주세요.'; return; }
+  if(!d){ err.textContent='날짜를 골라주세요.'; return; }
+  err.textContent='';
+  items.push({id:Date.now(), t, d, tm, m, done:false});
+  save(items);
+  document.getElementById('title').value='';
+  document.getElementById('time').value='';
+  document.getElementById('memo').value='';
+  render();
+}
+function toggle(id){ const it=items.find(x=>x.id===id); if(it){it.done=!it.done; save(items); render();} }
+function del(id){ items=items.filter(x=>x.id!==id); save(items); render(); }
+function dinfo(dstr){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dt=new Date(dstr+'T00:00:00');
+  const diff=Math.round((dt-today)/86400000);
+  if(diff===0)return{label:'오늘',cls:'today'};
+  if(diff<0)return{label:'지남',cls:'past'};
+  return{label:'D-'+diff,cls:''};
+}
+function fmtDate(d){ const x=new Date(d+'T00:00:00');
+  const w=['일','월','화','수','목','금','토'][x.getDay()];
+  return (x.getMonth()+1)+'월 '+x.getDate()+'일('+w+')'; }
+function render(){
+  const list=document.getElementById('list');
+  const sorted=[...items].sort((a,b)=> (a.d+ (a.tm||'')).localeCompare(b.d+(b.tm||'')) );
+  if(!sorted.length){ list.innerHTML='<div class="empty">아직 등록된 일정이 없어요.<br>위에서 첫 일정을 추가해 보세요! 😊</div>'; return; }
+  list.innerHTML='';
+  sorted.forEach(it=>{
+    const di=dinfo(it.d);
+    const el=document.createElement('div');
+    el.className='item '+di.cls+(it.done?' done':'');
+    el.innerHTML=`
+      <div class="dday ${di.cls}"><div class="d">${di.label}</div><div class="dt">${fmtDate(it.d)}</div></div>
+      <div class="it-body">
+        <div class="it-title">${esc(it.t)}</div>
+        <div class="it-meta">${fmtDate(it.d)}${it.tm?' · '+it.tm:''}</div>
+        ${it.m?`<div class="it-memo">📝 ${esc(it.m)}</div>`:''}
+      </div>
+      <div class="it-btns">
+        <button class="mini done-b" onclick="toggle(${it.id})">${it.done?'취소':'완료'}</button>
+        <button class="mini del" onclick="del(${it.id})">삭제</button>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// 오늘 날짜 기본값
+document.getElementById('date').value = new Date().toISOString().slice(0,10);
+render();
+</script>
+</body>
+</html>
